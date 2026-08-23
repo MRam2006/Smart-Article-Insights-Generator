@@ -1,0 +1,11 @@
+
+streamlit==1.47.0
+transformers==4.53.2
+torch==2.6.0
+accelerate==1.9.0
+huggingface_hub==0.33.4
+pandas==2.2.2
+numpy==1.26.4
+sentence-transformers
+faiss-cpu
+langchain
