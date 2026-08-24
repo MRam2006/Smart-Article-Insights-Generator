@@ -194,14 +194,13 @@ def summarize_tinyllama(article):
     )
 
     outputs = model_tinyllama.generate(
-        inputs["input_ids"],
-        attention_mask=inputs["attention_mask"],
-        max_new_tokens=500,
-        do_sample=True,
-        temperature=0.7,
-        min_new_tokens=150,
-        top_p=0.9,
-        pad_token_id=tokenizer_tinyllama.eos_token_id
+    inputs["input_ids"],
+    attention_mask=inputs["attention_mask"],
+    max_new_tokens=150,
+    do_sample=True,
+    temperature=0.7,
+    top_p=0.9,
+    pad_token_id=tokenizer_tinyllama.eos_token_id,
     )
 
     generated_text = tokenizer_tinyllama.decode(
