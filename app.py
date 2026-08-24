@@ -176,49 +176,42 @@ def summarize_tinyllama(article):
 
     tokenizer_tinyllama, model_tinyllama = get_tinyllama()
 
-    prompt = (
-        "Summarize the following article clearly and concisely:"
-    )
+    messages = [
+        {
+            "role": "system",
+            "content": "You are an AI assistant that summarizes articles clearly and concisely."
+        },
+        {
+            "role": "user",
+            "content": f"Summarize this article in 3 to 5 sentences:\n\n{article}"
+        }
+    ]
 
-    input_text = (
-        f"{prompt}\n"
-        f"{article}\n"
-        f"Summary:"
-    )
-
-    inputs = tokenizer_tinyllama(
-        input_text,
-        return_tensors="pt",
-        max_length=1024,
-        truncation=True
+    inputs = tokenizer_tinyllama.apply_chat_template(
+        messages,
+        add_generation_prompt=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt"
     )
 
     outputs = model_tinyllama.generate(
-    inputs["input_ids"],
-    attention_mask=inputs["attention_mask"],
-    max_new_tokens=150,
-    do_sample=True,
-    temperature=0.7,
-    top_p=0.9,
-    pad_token_id=tokenizer_tinyllama.eos_token_id,
+        **inputs,
+        max_new_tokens=150,
+        do_sample=True,
+        temperature=0.7,
+        top_p=0.9,
+        pad_token_id=tokenizer_tinyllama.eos_token_id
     )
 
-    generated_text = tokenizer_tinyllama.decode(
-        outputs[0],
+    input_length = inputs["input_ids"].shape[-1]
+
+    generated_tokens = outputs[0][input_length:]
+
+    summary = tokenizer_tinyllama.decode(
+        generated_tokens,
         skip_special_tokens=True
-    )
-
-    summary_start_index = generated_text.find("Summary:")
-
-    if summary_start_index != -1:
-
-        summary = generated_text[
-            summary_start_index + len("Summary:")
-        ].strip()
-
-    else:
-
-        summary = generated_text.strip()
+    ).strip()
 
     return summary
 
@@ -255,163 +248,54 @@ def answer_question_with_rag(article_text, question, k=3):
 
     tokenizer_tinyllama, model_tinyllama = get_tinyllama()
 
-    retrieved_context = retrieve_chunks(
-        question,
-        k=k
-    )
+    retrieved_context = retrieve_chunks(question, k=k)
 
-    context_text = "\n".join(
-        retrieved_context
-    )
+    context_text = "\n".join(retrieved_context)
 
-    input_text = f"""
-Based on the following context, answer the question.
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a helpful question-answering assistant. "
+                "Answer only using the provided context. "
+                "If the answer is not present in the context, say "
+                "\"I don't know based on the provided context.\""
+            )
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Context:\n{context_text}\n\n"
+                f"Question: {question}\n\n"
+                "Answer clearly and concisely."
+            )
+        }
+    ]
 
-If the answer is not in the context, state that you don't know.
-
-Context:
-{context_text}
-
-Question:
-{question}
-
-Answer:
-"""
-
-    inputs = tokenizer_tinyllama(
-        input_text,
-        return_tensors="pt",
-        max_length=1024,
-        truncation=True,
-        padding=True
+    inputs = tokenizer_tinyllama.apply_chat_template(
+        messages,
+        add_generation_prompt=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt"
     )
 
     outputs = model_tinyllama.generate(
-        inputs["input_ids"],
-        attention_mask=inputs["attention_mask"],
-        max_new_tokens=200,
+        **inputs,
+        max_new_tokens=100,
         do_sample=True,
         temperature=0.7,
         top_p=0.9,
         pad_token_id=tokenizer_tinyllama.eos_token_id
     )
 
-    generated_text = tokenizer_tinyllama.decode(
-        outputs[0],
+    input_length = inputs["input_ids"].shape[-1]
+
+    generated_tokens = outputs[0][input_length:]
+
+    answer = tokenizer_tinyllama.decode(
+        generated_tokens,
         skip_special_tokens=True
-    )
-
-    answer_start_index = generated_text.find("Answer:")
-
-    if answer_start_index != -1:
-
-        answer = generated_text[
-            answer_start_index + len("Answer:")
-        ].strip()
-
-    else:
-
-        answer = generated_text.strip()
+    ).strip()
 
     return answer
-
-
-# --------------------------------------------------
-# 10. STREAMLIT USER INTERFACE
-# --------------------------------------------------
-
-st.title("🧠 Smart Article Insights Generator")
-
-st.markdown(
-    """
-    Summarize an article or ask a question about it.
-    For Question Answering, RAG is applied to a pre-loaded sample article.
-    """
-)
-
-
-mode = st.radio(
-    "Select Mode",
-    [
-        "Summarize",
-        "Answer Question (RAG)"
-    ]
-)
-
-
-article_input = st.text_area(
-    "Article Text",
-    height=300,
-    placeholder="Paste the article here..."
-)
-
-
-question_input = None
-
-
-if mode == "Answer Question (RAG)":
-
-    st.info(
-        "For RAG-based Question Answering, "
-        "the system uses a pre-loaded sample article."
-    )
-
-    st.markdown(
-        "**RAG Sample Article (used for retrieval):**"
-    )
-
-    with st.expander("View RAG Sample Article"):
-
-        st.write(rag_sample_article)
-
-    question_input = st.text_input(
-        "Question",
-        placeholder="Enter your question here..."
-    )
-
-
-if st.button("🚀 Process"):
-
-    if mode == "Summarize":
-
-        if article_input:
-
-            with st.spinner(
-                "Generating summary..."
-            ):
-
-                output = summarize_tinyllama(
-                    article_input
-                )
-
-            st.subheader("📝 Summary")
-            st.write(output)
-
-        else:
-
-            st.warning(
-                "Please provide an article to summarize."
-            )
-
-
-    elif mode == "Answer Question (RAG)":
-
-        if question_input:
-
-            with st.spinner(
-                "Generating answer using RAG..."
-            ):
-
-                output = answer_question_with_rag(
-                    rag_sample_article,
-                    question_input
-                )
-
-            st.subheader("💡 Answer")
-            st.write(output)
-
-        else:
-
-            st.warning(
-                "Please provide a question to answer."
-            )
