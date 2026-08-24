@@ -10,7 +10,7 @@ import faiss
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from huggingface_hub import login
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 
 warnings.filterwarnings("ignore")
