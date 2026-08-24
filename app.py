@@ -8,7 +8,6 @@ import streamlit as st
 import torch
 import faiss
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
 from huggingface_hub import login
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
@@ -50,6 +49,10 @@ if hf_token:
 @st.cache_resource
 def load_tinyllama_model():
 
+    # Import inside the function so the app can start cleanly and
+    # show the real model-loading error if Transformers has a problem.
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
     model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -57,14 +60,13 @@ def load_tinyllama_model():
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=torch.float32,
-        device_map={"": "cpu"}
+        device_map="cpu",
+        low_cpu_mem_usage=True
     )
 
+    model.eval()
+
     return tokenizer, model
-
-
-with st.spinner("Loading TinyLlama model..."):
-    tokenizer_tinyllama, model_tinyllama = load_tinyllama_model()
 
 
 # --------------------------------------------------
@@ -149,10 +151,30 @@ with st.spinner("Preparing RAG components..."):
 
 
 # --------------------------------------------------
+# 7. LAZY LOAD TINYLLAMA
+# --------------------------------------------------
+
+tokenizer_tinyllama = None
+model_tinyllama = None
+
+
+def get_tinyllama():
+    global tokenizer_tinyllama, model_tinyllama
+
+    if tokenizer_tinyllama is None or model_tinyllama is None:
+        with st.spinner("Loading TinyLlama model..."):
+            tokenizer_tinyllama, model_tinyllama = load_tinyllama_model()
+
+    return tokenizer_tinyllama, model_tinyllama
+
+
+# --------------------------------------------------
 # 7. SUMMARIZATION FUNCTION
 # --------------------------------------------------
 
 def summarize_tinyllama(article):
+
+    tokenizer_tinyllama, model_tinyllama = get_tinyllama()
 
     prompt = (
         "Summarize the following article clearly and concisely:"
@@ -231,6 +253,8 @@ def retrieve_chunks(query, k=3):
 # --------------------------------------------------
 
 def answer_question_with_rag(article_text, question, k=3):
+
+    tokenizer_tinyllama, model_tinyllama = get_tinyllama()
 
     retrieved_context = retrieve_chunks(
         question,

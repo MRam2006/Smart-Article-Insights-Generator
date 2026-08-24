@@ -1,11 +1,10 @@
-
 streamlit==1.47.0
-transformers==4.55.4
+transformers==4.45.2
 torch==2.6.0
 accelerate==1.9.0
-huggingface_hub==0.34.0
+huggingface_hub==0.26.2
 pandas==2.2.2
 numpy==1.26.4
-sentence-transformers
+sentence-transformers==3.2.1
 faiss-cpu
 langchain-text-splitters
