@@ -1,0 +1,13 @@
+* [33m13f02a2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m initial commit
+* [33mbae92d5[m RAG updated
+[31m|[m * [33m43ac61a[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Added Dev Container Folder
+[31m|[m[31m/[m  
+* [33m626e7ae[m update tinyllama &RAG
+* [33mb5f6cc1[m update output token
+* [33m2fe87a3[m update torch_dtype
+* [33m8ed4626[m files updated
+*   [33me56af85[m Merge branch 'main' of https://github.com/MRam2006/smart-research-assistant
+[33m|[m[34m\[m  
+[33m|[m * [33mf569256[m Update transformers version to 4.55.4
+* [34m|[m [33m49082f9[m updated requirements.txt file
+[34m|[m[34m/[m  
