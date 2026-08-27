@@ -1,3 +1,15 @@
+---
+title: Smart Article Insights Generator
+emoji: 📚
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+app_file: app.py
+python_version: "3.12"
+short_description: AI-powered article summarization and RAG Q&A
+startup_duration_timeout: 30m
+---
+
 # 📰 Smart Article Insights Generator
 
 A local AI-powered application that summarizes articles and answers questions using Retrieval-Augmented Generation (RAG).
