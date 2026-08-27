@@ -5,7 +5,7 @@ colorFrom: blue
 colorTo: indigo
 sdk: gradio
 app_file: app.py
-python_version: "3.12"
+python_version: "3.10"
 short_description: AI-powered article summarization and RAG Q&A
 startup_duration_timeout: 30m
 ---
